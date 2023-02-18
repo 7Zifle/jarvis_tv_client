@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Jarvis_tv_client" parent="@style/Theme.Leanback" />
+</resources>

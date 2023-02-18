@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">jarvis_tv_client</string>
+    <string name="browse_title">Jarvis TV Client</string>
+    <string name="grid_view">Grid View</string>
+    <string name="error_fragment">Error Fragment</string>
+    <string name="personal_settings">Personal Settings</string>
+    <string name="movie">Movie</string>
+
+    <!-- Error messages -->
+    <string name="error_fragment_message">An error occurred</string>
+    <string name="dismiss_error">Dismiss</string>
+    <string name="title_activity_main">Leanback MainActivity</string>
+    <string name="notification_title">test notification</string>
+    <string name="notification_message">test message</string>
+    <string name="ticker_text">ticker</string>
+    <string name="channel_name">jarvis_notif</string>
+    <string name="channel_description">Channel for the jarvis notification</string>
+</resources>
