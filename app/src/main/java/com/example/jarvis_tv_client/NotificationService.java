@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 public class NotificationService extends Service {
     public static Logger logger = Logger.getLogger(NotificationService.class.getName());
     private static final Handler handler = new Handler();
+
     public NotificationService() {
     }
 
@@ -28,47 +29,39 @@ public class NotificationService extends Service {
         super.onCreate();
     }
 
-    private static class LoopRunnable implements Runnable {
-        ZContext context;
-        ZMQ.Socket socket;
-        public LoopRunnable() {
-            context = new ZContext();
-            socket = context.createSocket(SocketType.REQ);
-            socket.connect("tcp://13.37.69.107:43599");
-        }
-        @Override
-        public void run() {
-            socket.send("test");
-            logger.info("Sending message");
-            handler.postDelayed(new LoopRunnable(), 1000);
-        }
+    private void sendMessage(boolean playing) {
+        ZContext context = new ZContext();
+        ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+        assert(socket.connect("tcp://13.37.69.107:43599"));
+        socket.send(playing ? "playing" : "not_playing");
+        context.destroy();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         logger.info("calling onStartCommand");
+        // create the notification
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+        Notification notification = new Notification.Builder(this, Config.CHANNEL_ID)
+                .setContentTitle(getText(R.string.notification_title))
+                .setContentText(getText(R.string.notification_message))
+                .setContentIntent(pendingIntent)
+                .setTicker(getText(R.string.ticker_text))
+                .build();
+        startForeground(99, notification);
 
-        try (ZContext context = new ZContext()) {
-
-            ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-            if (!socket.connect("tcp://127.0.0.1:43599")) {
-                logger.severe("Unable to bind to socket");
+        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                logger.info("Sending music info");
+                sendMessage(audioManager.isMusicActive());
+                handler.postDelayed(this, 1000);
             }
-            // create the notification
-            Intent notificationIntent = new Intent(this, MainActivity.class);
-            PendingIntent pendingIntent =
-                    PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-            Notification notification = new Notification.Builder(this, Config.CHANNEL_ID)
-                    .setContentTitle(getText(R.string.notification_title))
-                    .setContentText(getText(R.string.notification_message))
-                    .setContentIntent(pendingIntent)
-                    .setTicker(getText(R.string.ticker_text))
-                    .build();
-            startForeground(99, notification);
-            // AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-            handler.postDelayed(new LoopRunnable(), 1000);
-            return super.onStartCommand(intent, flags, startId);
-        }
+        }, 1000);
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
@@ -78,6 +71,6 @@ public class NotificationService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-      return null;
+        return null;
     }
 }
